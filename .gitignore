@@ -1,0 +1,8 @@
+#VS
+PingleTest/.vs/*
+
+PingleTest/Debug/*
+PingleTest/Release/*
+
+PingleTest/snake/Debug/*
+PingleTest/snake/Release/*
