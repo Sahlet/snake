@@ -6,3 +6,9 @@ PingleTest/Release/*
 
 PingleTest/snake/Debug/*
 PingleTest/snake/Release/*
+
+PingleTest/x64/Debug/*
+PingleTest/x64/Release/*
+
+PingleTest/snake/x64/Debug/*
+PingleTest/snake/x64/Release/*
