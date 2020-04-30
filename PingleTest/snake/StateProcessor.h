@@ -4,6 +4,7 @@
 #include <memory>
 #include "Terminator.h"
 
+//keyboard state
 struct State
 {
     bool enterPressed = false;
@@ -16,6 +17,7 @@ struct State
     void update(const State& s);
 };
 
+//StateProcessor class provides last state
 class StateProcessor
 {
 public:

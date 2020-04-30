@@ -3,14 +3,36 @@
 
 #include <iostream>
 #include "StateProcessor.h"
+#include "Menu.h"
+#include "Game.h"
 
 void run()
 {
     auto terminator = std::make_shared<Terminator>();
     StateProcessor stateProcessor(std::static_pointer_cast<ITerminator>(terminator));
 
-    terminator->flag.store(true);
+    int bestScore = 0, lastScore = 0;
 
+    bool quit = false;
+    while (!quit)
+    {
+        auto menuResult = menu(stateProcessor, bestScore, lastScore);
+        switch (menuResult)
+        {
+        case MenuItem::Play:
+            lastScore = play(stateProcessor);
+            break;
+
+        case MenuItem::Quit:
+        default:
+            quit = true;
+            break;
+        };
+
+        bestScore = bestScore < lastScore ? lastScore : bestScore;
+    }
+
+    terminator->flag.store(true);
 
     stateProcessor.join();
 }

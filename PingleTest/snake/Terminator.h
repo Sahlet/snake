@@ -1,6 +1,7 @@
 #pragma once
 #include <atomic>
 
+//indicates whether the thread should stop running
 class ITerminator
 {
 public:

@@ -147,11 +147,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ConsoleHacks.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Menu.cpp" />
     <ClCompile Include="snake.cpp" />
     <ClCompile Include="StateProcessor.cpp" />
     <ClCompile Include="Terminator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConsoleHacks.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Menu.h" />
     <ClInclude Include="StateProcessor.h" />
     <ClInclude Include="Terminator.h" />
   </ItemGroup>
