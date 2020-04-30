@@ -32,7 +32,7 @@ void printingFrame()
 	std::cout << "\xbc";
 }
 
-void print(int score, char prevBuffer[MAX_X][MAX_Y], char buffer[MAX_X][MAX_Y])
+void print(int score, std::string prevBuffer[MAX_X][MAX_Y], std::string buffer[MAX_X][MAX_Y])
 {
 	std::stringstream s;
 	s << "Score: " << score;
@@ -44,15 +44,27 @@ void print(int score, char prevBuffer[MAX_X][MAX_Y], char buffer[MAX_X][MAX_Y])
 
 	std::cout << std::string(MAX_X - scoreSting.size(), ' ');
 
-	for (int i = scoreSting.size(); i < MAX_X; i++)
-	{
-		console_hacks::setCursorPosition(i, 0);
-	}
+	//console_hacks::setCursorPosition(bufferOriginX, bufferOriginY);
 
-	//console_hacks::setCursorPosition();
+	for (int i = 0; i < MAX_X; i++)
+	{
+		for (int j = 0; j < MAX_Y; j++)
+		{
+			if (prevBuffer[i][j] != buffer[i][j])
+			{
+				console_hacks::setCursorPosition(bufferOriginX + i, bufferOriginY + j);
+				std::cout << buffer[i][j];
+			}
+		}
+	}
 }
 
 int play(StateProcessor& stateProcessor)
 {
+	printingFrame();
+
+	std::string prevBuffer[MAX_X][MAX_Y];
+	std::string buffer[MAX_X][MAX_Y];
+
 	return 0;
 }
