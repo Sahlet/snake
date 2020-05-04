@@ -7,14 +7,16 @@
 //keyboard state
 struct State
 {
+    bool empty = true;
+
     bool enterPressed = false;
     bool escPressed = false;
+
+    //only one arrow can be pressed at time
     bool leftPressed = false;
     bool upPressed = false;
     bool rightPressed = false;
     bool downPressed = false;
-
-    void update(const State& s);
 };
 
 //StateProcessor class provides last state

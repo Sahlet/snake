@@ -1,5 +1,6 @@
 ﻿#include <sstream>
 #include <iostream>
+#include <vector>
 #include "Game.h"
 #include "ConsoleHacks.h"
 #include "Snake.h"
@@ -12,13 +13,13 @@ void printingFrame()
 {
 	console_hacks::setCursorPosition(frameOriginX, frameOriginY);
 	std::cout << "\xc9";
-	for (size_t i = 0; i < MAX_X; i++)
+	for (int i = 0; i < MAX_X; i++)
 	{
 		std::cout << "\xcd";
 	}
 	std::cout << "\xbb";
 	
-	for (size_t i = 0; i < MAX_Y; i++)
+	for (int i = 0; i < MAX_Y; i++)
 	{
 		console_hacks::setCursorPosition(frameOriginX, frameOriginY + i + 1);
 		std::cout << "\xba" << std::string(MAX_X, ' ') << "\xba";
@@ -26,14 +27,14 @@ void printingFrame()
 	
 	console_hacks::setCursorPosition(frameOriginX, frameOriginY + MAX_Y + 1);
 	std::cout << "\xc8";
-	for (size_t i = 0; i < MAX_X; i++)
+	for (int i = 0; i < MAX_X; i++)
 	{
 		std::cout << "\xcd";
 	}
 	std::cout << "\xbc";
 }
 
-void print(int score, std::string prevBuffer[MAX_X][MAX_Y], std::string buffer[MAX_X][MAX_Y])
+void print(int score, std::string* prevBuffer, std::string* buffer, unsigned short bufWidth, unsigned short bufHeight)
 {
 	std::stringstream s;
 	s << "Score: " << score;
@@ -41,20 +42,20 @@ void print(int score, std::string prevBuffer[MAX_X][MAX_Y], std::string buffer[M
 	console_hacks::setCursorPosition(0, 0);
 	std::cout << scoreSting;
 
-	console_hacks::setCursorPosition(scoreSting.size(), 0);
+	console_hacks::setCursorPosition((int)scoreSting.size(), 0);
 
 	std::cout << std::string(MAX_X - scoreSting.size(), ' ');
 
 	//console_hacks::setCursorPosition(bufferOriginX, bufferOriginY);
 
-	for (int i = 0; i < MAX_X; i++)
+	for (int i = 0; i < bufWidth; i++)
 	{
-		for (int j = 0; j < MAX_Y; j++)
+		for (int j = 0; j < bufHeight; j++)
 		{
-			if (prevBuffer[i][j] != buffer[i][j])
+			if (prevBuffer[j * bufWidth + i] != buffer[j * bufWidth + i])
 			{
 				console_hacks::setCursorPosition(bufferOriginX + i, bufferOriginY + j);
-				std::cout << buffer[i][j];
+				std::cout << buffer[j * bufWidth + i];
 			}
 		}
 	}
@@ -64,8 +65,75 @@ int play(StateProcessor& stateProcessor)
 {
 	printingFrame();
 
-	std::string prevBuffer[MAX_X][MAX_Y];
-	std::string buffer[MAX_X][MAX_Y];
+	std::vector<std::string> prevBuffer(MAX_X * MAX_Y);
+	std::vector<std::string> buffer(MAX_X * MAX_Y);
 
-	return 0;
+	int score = 0;
+	snake::Snake snake;
+
+	while (true)
+	{
+		auto state = stateProcessor.getLastState();
+
+		if (state->escPressed)
+		{
+			break;
+		}
+
+		bool arrowPressed = state->leftPressed || state->upPressed || state->rightPressed || state->downPressed;
+		if (arrowPressed)
+		{
+			//only one arrow can be pressed at time
+			snake::Direction dir = snake::Direction::Left;
+			if (state->leftPressed)
+			{
+				dir = snake::Direction::Left;
+			}
+			else if (state->upPressed)
+			{
+				dir = snake::Direction::Up;
+			}
+			else if (state->rightPressed)
+			{
+				dir = snake::Direction::Right;
+			}
+			else if (state->downPressed)
+			{
+				dir = snake::Direction::Down;
+			}
+
+			snake.turn(dir);
+		}
+
+		snake.move();
+		snake.printToBuffer(buffer.data(), MAX_X, MAX_Y);
+
+		print(score, prevBuffer.data(), buffer.data(), MAX_X, MAX_Y);
+
+		for (int i = 0; i < MAX_X; i++)
+		{
+			for (int j = 0; j < MAX_Y; j++)
+			{
+				prevBuffer[j * MAX_X + i] = std::move(buffer[j * MAX_X + i]);
+				buffer[j * MAX_X + i] = " ";
+			}
+		}
+
+		console_hacks::setCursorPosition(bufferOriginX + MAX_X + 2, bufferOriginY + MAX_Y + 2);
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+
+		auto headCoordinates = snake.getHeadCoordinates();
+		
+		if (headCoordinates.first > MAX_X || headCoordinates.second > MAX_Y)
+		{
+			break;
+		}
+
+		if (snake.isHeadOnTail())
+		{
+			break;
+		}
+	}
+
+	return score;
 }

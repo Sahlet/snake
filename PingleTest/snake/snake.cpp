@@ -4,34 +4,54 @@ namespace snake
 {
 	std::string Node::getSign(unsigned short fieldWidth, unsigned short fieldHeight)
 	{
-		auto prev = this->prev.lock();
-		if (!prev)
+		auto first = this->prev.lock();
+		auto second = next;
+		
+		if (!first)
 		{
 			return "?";
 		}
 
-		bool prevIsHorizontal = isHorizontal(prev.get(), fieldWidth, fieldHeight);
-
-		if (next)
+		bool firstIsNear = isNear(first.get(), fieldWidth, fieldHeight);
+		if (!firstIsNear)
 		{
-			bool nextIsHorizontal = isHorizontal(next.get(), fieldWidth, fieldHeight);
-
-			if (nextIsHorizontal == prevIsHorizontal)
+			if (!second)
 			{
-				return prevIsHorizontal ? "\xc4" : "\xb3";
+				return "?";
+			}
+
+			std::swap(first, second);
+
+			firstIsNear = isNear(first.get(), fieldWidth, fieldHeight);
+			if (!firstIsNear)
+			{
+				return "?";
+			}
+		}
+		
+		bool firstIsHorizontal = isHorizontal(first.get(), fieldWidth, fieldHeight);
+		bool secondIsNear = second ? isNear(second.get(), fieldWidth, fieldHeight) : false;
+
+		if (secondIsNear)
+		{
+			bool secondIsHorizontal = isHorizontal(second.get(), fieldWidth, fieldHeight);
+
+			if (secondIsHorizontal == firstIsHorizontal)
+			{
+				return firstIsHorizontal ? "\xc4" : "\xb3";
 			}
 			else
 			{
-				Node* horNode = prev.get();
-				Node* vertNode = next.get();
+				Node* horNode = first.get();
+				Node* vertNode = second.get();
 
-				if (!prevIsHorizontal)
+				if (!firstIsHorizontal)
 				{
 					std::swap(horNode, vertNode);
 				}
 
 				bool horIsLeft = horNode->x < this->x;
-				bool vertIsUp = horNode->y < this->y;
+				bool vertIsUp = vertNode->y < this->y;
 
 				if (horIsLeft && vertIsUp)
 				{
@@ -56,7 +76,7 @@ namespace snake
 		}
 		else
 		{
-			return prevIsHorizontal ? "\xc4" : "\xb3";
+			return firstIsHorizontal ? "\xc4" : "\xb3";
 		}
 
 		return "?";
@@ -103,7 +123,7 @@ namespace snake
 		return "@";
 	}
 
-	Snake::Snake(unsigned short headX = 10, unsigned short headY = 10, unsigned short length = 3)
+	Snake::Snake(unsigned short headX, unsigned short headY, unsigned short length)
 	{
 		if (length < 3)
 		{
@@ -114,9 +134,9 @@ namespace snake
 		this->head->x = headX;
 		this->head->y = headY;
 
-		auto prev = head;
+		std::shared_ptr<Node> prev = head;
 
-		for (size_t i = 1; i < length; i++)
+		for (unsigned short i = 1; i < length; i++)
 		{
 			auto node = std::make_shared<Node>();
 			node->x = headX + i;
@@ -143,6 +163,7 @@ namespace snake
 
 		last->next = head->next;
 		last->prev = head;
+		last->next->prev = last;
 
 		head->next = last;
 
@@ -180,7 +201,7 @@ namespace snake
 
 	void Snake::printToBuffer(std::string* buffer, unsigned short width, unsigned short height)
 	{
-		std::shared_ptr<Node> node = head;
+		std::shared_ptr<Node> node = last;
 		while (node)
 		{
 			if (node->x < width && node->y < height)
@@ -188,8 +209,24 @@ namespace snake
 				buffer[node->y * width + node->x] = node->getSign(width, height);
 			}
 
-			node = node->next;
+			node = node->prev.lock();
 		}
+	}
+
+	bool Snake::isHeadOnTail()
+	{
+		auto next = head->next;
+		while (next)
+		{
+			if (next->x == head->x && next->y == head->y)
+			{
+				return true;
+			}
+
+			next = next->next;
+		}
+
+		return false;
 	}
 
 	void Snake::moveHead()

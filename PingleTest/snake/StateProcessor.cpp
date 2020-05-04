@@ -1,31 +1,6 @@
 #include <Windows.h>
 #include "StateProcessor.h"
 
-void State::update(const State& s)
-{
-    *this = s;
-
-    bool arrowPressed = false;
-
-    arrowPressed |= leftPressed;
-    if (arrowPressed)
-    {
-        upPressed = false;
-    }
-
-    arrowPressed |= upPressed;
-    if (arrowPressed)
-    {
-        rightPressed = false;
-    }
-
-    arrowPressed |= rightPressed;
-    if (arrowPressed)
-    {
-        downPressed = false;
-    }
-}
-
 void fillState(State& e)
 {
     auto pressed = [](int vKey) -> bool
@@ -33,12 +8,19 @@ void fillState(State& e)
         return GetAsyncKeyState(vKey);
     };
 
-    e.enterPressed = pressed(VK_RETURN);
-    e.escPressed = pressed(VK_ESCAPE);
-    e.leftPressed = pressed(VK_LEFT);
-    e.upPressed = pressed(VK_UP);
-    e.rightPressed = pressed(VK_RIGHT);
-    e.downPressed = pressed(VK_DOWN);
+    bool wasPressed = false;
+    wasPressed = e.enterPressed = pressed(VK_RETURN);
+    if (wasPressed) { e.empty = false; return; }
+    wasPressed = e.escPressed = pressed(VK_ESCAPE);
+    if (wasPressed) { e.empty = false; return; }
+    wasPressed = e.leftPressed = pressed(VK_LEFT);
+    if (wasPressed) { e.empty = false; return; }
+    wasPressed = e.upPressed = pressed(VK_UP);
+    if (wasPressed) { e.empty = false; return; }
+    wasPressed = e.rightPressed = pressed(VK_RIGHT);
+    if (wasPressed) { e.empty = false; return; }
+    wasPressed = e.downPressed = pressed(VK_DOWN);
+    if (wasPressed) { e.empty = false; return; }
 }
 
 StateProcessor::StateProcessor(std::shared_ptr<ITerminator> terminator)
@@ -59,9 +41,10 @@ StateProcessor::StateProcessor(std::shared_ptr<ITerminator> terminator)
             State s;
             fillState(s);
 
+            if (!s.empty)
             {
                 std::lock_guard<std::mutex> lock(m);
-                this->state.update(s);
+                this->state = s;
             }
         }
     });
@@ -73,6 +56,7 @@ std::unique_ptr<State> StateProcessor::getLastState()
     {
         std::lock_guard<std::mutex> lock(m);
         res = std::make_unique<State>(state);
+        state = State();
     }
 
     return std::move(res);

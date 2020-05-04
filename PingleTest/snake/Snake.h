@@ -51,6 +51,8 @@ namespace snake
 
 		void printToBuffer(std::string* buffer, unsigned short width, unsigned short height);
 
+		bool isHeadOnTail();
+
 		inline std::pair<unsigned short, unsigned short> getHeadCoordinates()
 		{
 			return { head->x, head->y };
