@@ -69,4 +69,4 @@ namespace console_hacks
 
         cls(hStdout);
     }
-}
+} // namespace console_hacks

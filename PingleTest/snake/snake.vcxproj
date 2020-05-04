@@ -150,7 +150,7 @@
     <ClCompile Include="ConsoleHacks.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Menu.cpp" />
-    <ClCompile Include="snake.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="StateProcessor.cpp" />
     <ClCompile Include="Terminator.cpp" />
   </ItemGroup>

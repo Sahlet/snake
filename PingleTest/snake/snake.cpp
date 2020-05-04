@@ -1,54 +1,215 @@
-// snake.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+#include "Snake.h"
 
-#include <iostream>
-#include "StateProcessor.h"
-#include "Menu.h"
-#include "Game.h"
-
-void run()
+namespace snake
 {
-    auto terminator = std::make_shared<Terminator>();
-    StateProcessor stateProcessor(std::static_pointer_cast<ITerminator>(terminator));
+	std::string Node::getSign(unsigned short fieldWidth, unsigned short fieldHeight)
+	{
+		auto prev = this->prev.lock();
+		if (!prev)
+		{
+			return "?";
+		}
 
-    int bestScore = 0, lastScore = 0;
+		bool prevIsHorizontal = isHorizontal(prev.get(), fieldWidth, fieldHeight);
 
-    bool quit = false;
-    while (!quit)
-    {
-        auto menuResult = menu(stateProcessor, bestScore, lastScore);
-        switch (menuResult)
-        {
-        case MenuItem::Play:
-            lastScore = play(stateProcessor);
-            break;
+		if (next)
+		{
+			bool nextIsHorizontal = isHorizontal(next.get(), fieldWidth, fieldHeight);
 
-        case MenuItem::Quit:
-        default:
-            quit = true;
-            break;
-        };
+			if (nextIsHorizontal == prevIsHorizontal)
+			{
+				return prevIsHorizontal ? "\xc4" : "\xb3";
+			}
+			else
+			{
+				Node* horNode = prev.get();
+				Node* vertNode = next.get();
 
-        bestScore = bestScore < lastScore ? lastScore : bestScore;
-    }
+				if (!prevIsHorizontal)
+				{
+					std::swap(horNode, vertNode);
+				}
 
-    terminator->flag.store(true);
+				bool horIsLeft = horNode->x < this->x;
+				bool vertIsUp = horNode->y < this->y;
 
-    stateProcessor.join();
-}
+				if (horIsLeft && vertIsUp)
+				{
+					return "\xd9";
+				}
 
-int main()
-{
-    run();
-}
+				if (!horIsLeft && vertIsUp)
+				{
+					return "\xc0";
+				}
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
+				if (horIsLeft && !vertIsUp)
+				{
+					return "\xbf";
+				}
 
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+				if (!horIsLeft && !vertIsUp)
+				{
+					return "\xda";
+				}
+			}
+		}
+		else
+		{
+			return prevIsHorizontal ? "\xc4" : "\xb3";
+		}
+
+		return "?";
+	}
+
+	bool Node::isNear(Node* node, unsigned short /*fieldWidth*/, unsigned short /*fieldHeight*/)
+	{
+		if (!node)
+		{
+			throw std::exception("node is null");
+		}
+
+		return (std::abs((int)node->x - (int)this->x) + std::abs((int)node->y - (int)this->y)) == 1;
+	}
+
+	bool Node::isHorizontal(Node* node, unsigned short fieldWidth, unsigned short fieldHeight)
+	{
+		if (!isNear(node, fieldWidth, fieldHeight))
+		{
+			throw std::exception("node is not near");
+		}
+
+		return std::abs((int)node->x - (int)this->x) == 1;
+	}
+
+	std::string Head::getSign(unsigned short fieldWidth, unsigned short fieldHeight)
+	{
+		if (x >= fieldWidth || y >= fieldHeight)
+		{
+			return "#";
+		}
+
+		auto next = this->next;
+		while (next)
+		{
+			if (next->x == x && next->y == y)
+			{
+				return "#";
+			}
+
+			next = next->next;
+		}
+
+		return "@";
+	}
+
+	Snake::Snake(unsigned short headX = 10, unsigned short headY = 10, unsigned short length = 3)
+	{
+		if (length < 3)
+		{
+			throw std::exception("snake length less then 3");
+		}
+
+		this->head = std::make_shared<Head>();
+		this->head->x = headX;
+		this->head->y = headY;
+
+		auto prev = head;
+
+		for (size_t i = 1; i < length; i++)
+		{
+			auto node = std::make_shared<Node>();
+			node->x = headX + i;
+			node->y = headY;
+
+			prev->next = node;
+			node->prev = prev;
+			prev = node;
+		}
+
+		this->last = prev;
+		this->dir = Direction::Left;
+	}
+
+	void Snake::move()
+	{
+		auto prevHeadCoordinates = getHeadCoordinates();
+		moveHead();
+
+		last->x = prevHeadCoordinates.first;
+		last->y = prevHeadCoordinates.second;
+
+		auto newLast = last->prev.lock();
+
+		last->next = head->next;
+		last->prev = head;
+
+		head->next = last;
+
+		newLast->next = nullptr;
+		last = newLast;
+	}
+
+	bool Snake::turn(Direction dir)
+	{
+		if (((int)dir % 2) == ((int)this->dir % 2))
+		{
+			return false;
+		}
+
+		this->dir = dir;
+		return true;
+	}
+
+	void Snake::grow()
+	{
+		auto prevHeadCoordinates = getHeadCoordinates();
+		moveHead();
+
+		auto node = std::make_shared<Node>();
+		node->x = prevHeadCoordinates.first;
+		node->y = prevHeadCoordinates.second;
+
+		node->next = head->next;
+		node->prev = head;
+		
+		head->next = node;
+
+		node->next->prev = node;
+	}
+
+	void Snake::printToBuffer(std::string* buffer, unsigned short width, unsigned short height)
+	{
+		std::shared_ptr<Node> node = head;
+		while (node)
+		{
+			if (node->x < width && node->y < height)
+			{
+				buffer[node->y * width + node->x] = node->getSign(width, height);
+			}
+
+			node = node->next;
+		}
+	}
+
+	void Snake::moveHead()
+	{
+		switch (dir)
+		{
+		case snake::Direction::Left:
+			this->head->x--;
+			break;
+		case snake::Direction::Up:
+			this->head->y--;
+			break;
+		case snake::Direction::Right:
+			this->head->x++;
+			break;
+		case snake::Direction::Down:
+			this->head->y++;
+			break;
+		default:
+			break;
+		}
+	}
+} // namespace snake

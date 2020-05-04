@@ -2,6 +2,7 @@
 #include <iostream>
 #include "Game.h"
 #include "ConsoleHacks.h"
+#include "Snake.h"
 
 const int MAX_X = 50, MAX_Y = 20;
 const int frameOriginX = 4, frameOriginY = 2;
