@@ -279,7 +279,7 @@ namespace snake
 
 	void Food::printToBuffer(std::string* buffer, unsigned short width, unsigned short height) const
 	{
-		buffer[y * width + x] = "\xdc";
+		buffer[y * width + x] = "\xdb";
 	}
 
 	bool Food::jump(const Snake& snake, unsigned short fieldWidth, unsigned short fieldHeight)

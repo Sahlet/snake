@@ -8,6 +8,7 @@
 const int MAX_X = 50, MAX_Y = 20;
 const int frameOriginX = 4, frameOriginY = 2;
 const int bufferOriginX = frameOriginX + 1, bufferOriginY = frameOriginY + 1;
+const std::chrono::milliseconds delay(500);
 
 void printingFrame()
 {
@@ -145,7 +146,7 @@ int play(StateProcessor& stateProcessor)
 		}
 
 		console_hacks::setCursorPosition(bufferOriginX + MAX_X + 2, bufferOriginY + MAX_Y + 2);
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+		std::this_thread::sleep_for(delay);
 
 		auto headCoordinates = snake.getHeadCoordinates();
 		
