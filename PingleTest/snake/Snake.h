@@ -49,13 +49,20 @@ namespace snake
 		bool turn(Direction dir);
 		void grow();
 
-		void printToBuffer(std::string* buffer, unsigned short width, unsigned short height);
+		void printToBuffer(std::string* buffer, unsigned short width, unsigned short height) const;
 
-		bool isHeadOnTail();
+		bool isHeadOnTail() const;
 
-		inline std::pair<unsigned short, unsigned short> getHeadCoordinates()
+		std::pair<unsigned short, unsigned short> getNextHeadCoordinates() const;
+
+		inline std::pair<unsigned short, unsigned short> getHeadCoordinates() const
 		{
 			return { head->x, head->y };
+		}
+
+		inline Direction getDirection() const
+		{
+			return dir;
 		}
 
 	private:
@@ -65,5 +72,20 @@ namespace snake
 		std::shared_ptr<Head> head;
 		std::shared_ptr<Node> last;
 		Direction dir;
+	};
+
+	class Food
+	{
+	public:
+		void printToBuffer(std::string* buffer, unsigned short width, unsigned short height) const;
+		bool jump(const Snake& snake, unsigned short fieldWidth, unsigned short fieldHeight);
+
+		inline std::pair<unsigned short, unsigned short> getCoordinates() const
+		{
+			return { x, y };
+		}
+
+	private:
+		unsigned short x = 0, y = 0;
 	};
 } // namespace snake

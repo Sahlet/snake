@@ -1,3 +1,5 @@
+#include <vector>
+#include <random>
 #include "Snake.h"
 
 namespace snake
@@ -199,7 +201,7 @@ namespace snake
 		node->next->prev = node;
 	}
 
-	void Snake::printToBuffer(std::string* buffer, unsigned short width, unsigned short height)
+	void Snake::printToBuffer(std::string* buffer, unsigned short width, unsigned short height) const
 	{
 		std::shared_ptr<Node> node = last;
 		while (node)
@@ -213,7 +215,7 @@ namespace snake
 		}
 	}
 
-	bool Snake::isHeadOnTail()
+	bool Snake::isHeadOnTail() const
 	{
 		auto next = head->next;
 		while (next)
@@ -227,6 +229,31 @@ namespace snake
 		}
 
 		return false;
+	}
+
+	std::pair<unsigned short, unsigned short> Snake::getNextHeadCoordinates() const
+	{
+		auto headCoordinates = getHeadCoordinates();
+
+		switch (dir)
+		{
+		case snake::Direction::Left:
+			headCoordinates.first--;
+			break;
+		case snake::Direction::Up:
+			headCoordinates.second--;
+			break;
+		case snake::Direction::Right:
+			headCoordinates.first++;
+			break;
+		case snake::Direction::Down:
+			headCoordinates.second++;
+			break;
+		default:
+			break;
+		}
+
+		return headCoordinates;
 	}
 
 	void Snake::moveHead()
@@ -248,5 +275,61 @@ namespace snake
 		default:
 			break;
 		}
+	}
+
+	void Food::printToBuffer(std::string* buffer, unsigned short width, unsigned short height) const
+	{
+		buffer[y * width + x] = "\xdc";
+	}
+
+	bool Food::jump(const Snake& snake, unsigned short fieldWidth, unsigned short fieldHeight)
+	{
+		std::vector<std::string> buffer((int)fieldWidth * (int)fieldHeight);
+		snake.printToBuffer(buffer.data(), fieldWidth, fieldHeight);
+
+		int freeSpacesCount = 0;
+		for (size_t i = 0; i < fieldWidth; i++)
+		{
+			for (size_t j = 0; j < fieldHeight; j++)
+			{
+				if (!buffer[j * fieldWidth + i].length())
+				{
+					freeSpacesCount++;
+				}
+			}
+		}
+
+		if (freeSpacesCount == 0)
+		{
+			return false;
+		}
+
+		std::random_device rd;
+		std::mt19937 mt(rd());
+		int place = mt() % freeSpacesCount;
+		freeSpacesCount = 0;
+
+		for (unsigned short i = 0; i < fieldWidth; i++)
+		{
+			for (unsigned short j = 0; j < fieldHeight; j++)
+			{
+				if (!buffer[(int)j * (int)fieldWidth + (int)i].length())
+				{
+					if (place == freeSpacesCount)
+					{
+						x = i;
+						y = j;
+						i = fieldWidth;
+						j = fieldHeight;
+					}
+					else
+					{
+						freeSpacesCount++;
+					}
+				}
+			}
+		}
+
+		return true;
 	}
 } // namespace snake

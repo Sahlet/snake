@@ -61,6 +61,14 @@ void print(int score, std::string* prevBuffer, std::string* buffer, unsigned sho
 	}
 }
 
+bool willGrowByNextMove(const snake::Snake& snake, const snake::Food& food)
+{
+	auto nextHeadCoordinates = snake.getNextHeadCoordinates();
+	auto coordinates = food.getCoordinates();
+
+	return nextHeadCoordinates == coordinates;
+}
+
 int play(StateProcessor& stateProcessor)
 {
 	printingFrame();
@@ -70,8 +78,11 @@ int play(StateProcessor& stateProcessor)
 
 	int score = 0;
 	snake::Snake snake;
+	snake::Food food;
+	food.jump(snake, MAX_X, MAX_Y);
 
-	while (true)
+	bool runGame = true;
+	while (runGame)
 	{
 		auto state = stateProcessor.getLastState();
 
@@ -105,7 +116,21 @@ int play(StateProcessor& stateProcessor)
 			snake.turn(dir);
 		}
 
-		snake.move();
+		if (willGrowByNextMove(snake, food))
+		{
+			snake.grow();
+			score++;
+			if (!food.jump(snake, MAX_X, MAX_Y))
+			{
+				runGame = false;
+			}
+		}
+		else
+		{
+			snake.move();
+		}
+
+		food.printToBuffer(buffer.data(), MAX_X, MAX_Y);
 		snake.printToBuffer(buffer.data(), MAX_X, MAX_Y);
 
 		print(score, prevBuffer.data(), buffer.data(), MAX_X, MAX_Y);
@@ -124,14 +149,14 @@ int play(StateProcessor& stateProcessor)
 
 		auto headCoordinates = snake.getHeadCoordinates();
 		
-		if (headCoordinates.first > MAX_X || headCoordinates.second > MAX_Y)
+		if (headCoordinates.first >= MAX_X || headCoordinates.second >= MAX_Y)
 		{
-			break;
+			runGame = false;
 		}
 
 		if (snake.isHeadOnTail())
 		{
-			break;
+			runGame = false;
 		}
 	}
 
